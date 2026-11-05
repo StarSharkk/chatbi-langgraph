@@ -10,6 +10,8 @@
 
 数据是阿里天池 UserBehavior 数据集中 10% 的用户，约 998 万条行为记录，时间范围为 2017-11-25 至 12-03。
 
+**在线演示**：https://taobao-chatbi.streamlit.app （每次提问都会消耗作者的模型额度，所以需要访问密码，如需试用请联系作者）
+
 ![界面截图](docs/screenshot.png)
 
 ## 架构
@@ -83,6 +85,8 @@ text-to-SQL 最危险的错误不是报错，而是 **SQL 能执行，但口径�
 
 题库在 [`eval/`](eval/) 目录，评估明细 CSV 也在那里。评估脚本是 [`lesson07_eval.py`](lesson07_eval.py)。
 
+迁移到云端（TiDB Cloud）后，用 `full` 版本各复测了一次：常规题 19/20，陷阱题 10/10。常规题错的那 1 次是第 9 题，模型漏掉了"只统计加购用户"这个筛选条件。也就是说，即使给了口径定义，LLM 仍会偶尔出现逻辑疏漏。把本地和云端的运行合在一起算，`full` 版本的常规题准确率为 59/60（约 98%）。
+
 **局限**：题目数量少；题目和知识文件由同一组人编写；判分规则对数值的匹配比较宽松。这些结果只能说明方向，不能作为严格的基准测试。
 
 ## 目录结构
@@ -131,6 +135,17 @@ streamlit run app.py
 
 也可以直接在命令行提问：`python lesson06_explain.py "复购率是多少？"`
 
+## 云端部署
+
+| 组件 | 做法 |
+|---|---|
+| 数据库 | **TiDB Cloud Starter**（兼容 MySQL，免费额度）。[`deploy/import_to_tidb.sh`](deploy/import_to_tidb.sh) 把本地数据拆成每份 50 万行，用 `LOAD DATA` 导入，再建索引、建只读账号；连接全程开启 TLS 并校验服务器证书 |
+| 分析性能 | 免费版单条查询的内存有限，"用户×商品"这类千万行级别的分组会超出内存。用 [`deploy/enable_tiflash.sh`](deploy/enable_tiflash.sh) 开启 **TiFlash 列存**后，这类查询改走列存加 MPP 并行计算，5～6 秒就能完成（行存是 OLTP，列存是 OLAP） |
+| 应用 | **Streamlit Community Cloud**，密钥放在 Secrets 里，启动时写入环境变量 |
+| 防滥用 | 访问密码（`APP_PASSWORD`）+ 每个会话最多提问 20 次；模型账户只充少量余额。实测每个问题约 3,000～4,000 token，费用不到 1 分钱人民币，其中约 85% 的输入 token 命中了前缀缓存 |
+
+本地和云端用同一套代码，只是读取的配置不同：用 `CHATBI_ENV=.env.cloud streamlit run app.py` 在本地连接云数据库。
+
 ## 技术栈
 
-LangGraph · LangChain · DeepSeek（deepseek-flash）· sqlglot · MySQL · pandas · Streamlit
+LangGraph · LangChain · DeepSeek（deepseek-flash）· sqlglot · MySQL / TiDB Cloud（TiFlash）· pandas · Streamlit
