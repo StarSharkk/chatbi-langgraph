@@ -1,0 +1,8 @@
+langgraph==1.2.19
+langchain-openai==1.7.3
+langchain-core==1.7.4
+pymysql==1.2.3
+sqlglot==30.29.0
+python-dotenv
+pandas
+streamlit
