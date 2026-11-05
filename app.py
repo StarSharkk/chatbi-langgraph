@@ -1,4 +1,5 @@
 # 第 8 课：Streamlit 网页界面（运行：streamlit run app.py）
+import os
 from datetime import date
 
 import pandas as pd
@@ -10,6 +11,20 @@ st.set_page_config(page_title="淘宝 ChatBI", page_icon="📊", layout="wide")
 st.title("📊 淘宝用户行为 ChatBI")
 st.caption("用中文提问，自动生成 SQL → 安全检查 → 只读执行 → 业务解释。"
            "数据：2017-11-25 至 12-03，10% 用户抽样。")
+
+# ---------- 部署到公网时的防滥用：访问密码 + 每个会话的提问上限 ----------
+# 每次提问都花你的 DeepSeek 余额，所以公开部署时一定要设 APP_PASSWORD
+APP_PASSWORD = os.getenv("APP_PASSWORD")
+MAX_QUESTIONS = int(os.getenv("MAX_QUESTIONS_PER_SESSION", "20"))
+
+if APP_PASSWORD and not st.session_state.get("authed"):
+    pw = st.text_input("请输入访问密码", type="password")
+    if pw == APP_PASSWORD:
+        st.session_state.authed = True
+        st.rerun()
+    if pw:
+        st.error("密码不正确")
+    st.stop()  # 没通过就不渲染下面的内容
 
 NODE_NAMES = {"generate": "生成 SQL", "check": "安全检查", "execute": "执行查询", "explain": "解释结果"}
 EXAMPLES = ["每天的 DAU 是多少？", "复购率是多少？", "加购过的用户有多少比例最后购买了？",
@@ -82,6 +97,10 @@ for turn in st.session_state.history:
     st.chat_message("user").write(turn["question"])
     with st.chat_message("assistant"):
         show_answer(turn["final"])
+
+if question and len(st.session_state.history) >= MAX_QUESTIONS:
+    st.warning(f"本次会话已达到 {MAX_QUESTIONS} 个问题的上限，请刷新页面后再试。")
+    question = None
 
 if question:
     st.chat_message("user").write(question)

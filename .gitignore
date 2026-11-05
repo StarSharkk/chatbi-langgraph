@@ -6,3 +6,6 @@ __pycache__/
 .DS_Store
 # 个人复习笔记，不公开
 复习笔记.md
+.env.*
+!.env.example
+deploy/export/

@@ -9,7 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
 HERE = Path(__file__).parent
-load_dotenv(HERE / ".env")
+load_dotenv(HERE / os.getenv("CHATBI_ENV", ".env"))  # 默认读 .env；CHATBI_ENV=.env.cloud 时改连云数据库
 
 llm = ChatOpenAI(
     model=os.getenv("LLM_MODEL"),

@@ -3,6 +3,7 @@ import os
 import sys
 from pathlib import Path
 
+import certifi
 import pandas as pd
 import pymysql
 from dotenv import load_dotenv
@@ -10,7 +11,7 @@ from dotenv import load_dotenv
 from lesson02_generate_sql import generate_sql
 from lesson03_check_sql import check_sql
 
-load_dotenv(Path(__file__).parent / ".env")
+load_dotenv(Path(__file__).parent / os.getenv("CHATBI_ENV", ".env"))
 
 TIMEOUT_MS = 30_000  # 单条查询最多跑 30 秒，超时由 MySQL 自己中断
 
@@ -25,6 +26,8 @@ def run_sql(sql: str) -> tuple[bool, pd.DataFrame | str]:
             password=os.getenv("MYSQL_PASSWORD"),
             database=os.getenv("MYSQL_DB"),
             charset="utf8mb4",
+            # 云数据库（如 TiDB Cloud）要求加密连接；本地 MySQL 不需要
+            ssl={"ca": certifi.where()} if os.getenv("MYSQL_SSL") == "true" else None,
         )
     except pymysql.MySQLError as e:
         return False, f"连接数据库失败：{e}"
