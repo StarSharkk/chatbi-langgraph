@@ -1,6 +1,7 @@
 # 第 8 课：Streamlit 网页界面（运行：streamlit run app.py）
 import os
 from datetime import date
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
@@ -12,6 +13,13 @@ try:
         os.environ.setdefault(key, str(value))
 except Exception:
     pass
+
+# 先检查必需配置，缺了就给出明确提示，而不是抛一长串看不懂的报错
+_missing = [k for k in ("DEEPSEEK_API_KEY", "LLM_MODEL", "MYSQL_HOST", "MYSQL_USER", "MYSQL_PASSWORD")
+            if not os.getenv(k)]
+if _missing and not (Path(__file__).parent / os.getenv("CHATBI_ENV", ".env")).exists():
+    st.error(f"缺少配置：{', '.join(_missing)}。部署在 Streamlit Cloud 时，请在 Manage app → Settings → Secrets 中填写。")
+    st.stop()
 
 from lesson06_explain import graph  # noqa: E402（必须在上面的环境变量设置之后导入）
 
