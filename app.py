@@ -5,7 +5,15 @@ from datetime import date
 import pandas as pd
 import streamlit as st
 
-from lesson06_explain import graph
+# Streamlit Cloud 把密钥放在 st.secrets 里；后面的模块用 os.getenv 读取，
+# 所以要在 import 它们之前，先把 secrets 复制进环境变量（本地没有 secrets 时跳过，改读 .env）
+try:
+    for key, value in st.secrets.items():
+        os.environ.setdefault(key, str(value))
+except Exception:
+    pass
+
+from lesson06_explain import graph  # noqa: E402（必须在上面的环境变量设置之后导入）
 
 st.set_page_config(page_title="淘宝 ChatBI", page_icon="📊", layout="wide")
 st.title("📊 淘宝用户行为 ChatBI")
