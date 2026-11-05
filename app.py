@@ -24,7 +24,7 @@ if _missing and not (Path(__file__).parent / os.getenv("CHATBI_ENV", ".env")).ex
 from lesson06_explain import graph  # noqa: E402（必须在上面的环境变量设置之后导入）
 
 st.set_page_config(page_title="淘宝 ChatBI", page_icon="📊", layout="wide")
-st.title("📊 淘宝用户行为 ChatBI")
+st.title("淘宝用户行为 ChatBI")
 st.caption("用中文提问，自动生成 SQL → 安全检查 → 只读执行 → 业务解释。"
            "数据：2017-11-25 至 12-03，10% 用户抽样。")
 
